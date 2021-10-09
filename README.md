@@ -7,6 +7,7 @@
 这里可以展示这份作业（项目）run起来后的可视化效果，可以让其他人更直观感受到你的工作
 
 ![fractal demo](./data/taichi.gif)
+![fractal demo](./data/art.gif)
 
 通过修改信息素浓度以及作用等可以整出更多酷炫效果
 
