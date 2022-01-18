@@ -102,12 +102,11 @@ class AntColony:
         for i in range(1000000):
             if self.window.running:
                 mouse = self.window.get_cursor_pos()
-                for e in self.window.get_events(ti.ui.PRESS):
-                    if e.key in [ti.ui.SPACE]:
-                        self.is_paused[None] = 0
-                    elif self.window.is_pressed("h") and e.key == ti.ui.LMB:
-                        self.home_pos[0] = ti.Vector([mouse[0], mouse[1]])
-                        self.ants.set_random_circle(ti.Vector([mouse[0], mouse[1]]), self.home_radius)
+                if self.window.is_pressed(ti.ui.SPACE):
+                    self.is_paused[None] = 0
+                if self.window.is_pressed("h") and self.window.is_pressed(ti.ui.LMB):
+                    self.home_pos[0] = ti.Vector([mouse[0], mouse[1]])
+                    self.ants.set_random_circle(ti.Vector([mouse[0], mouse[1]]), self.home_radius)
                 if self.window.is_pressed("f"):
                     if self.window.is_pressed(ti.ui.LMB):
                         self.foods.draw(ti.Vector([mouse[0], mouse[1]]), 2)
@@ -154,9 +153,8 @@ class AntColony:
         self.p_from_home.init()
         for i in range(10000000):
             if self.window.running:
-                for e in self.window.get_events(ti.ui.PRESS):
-                    if e.key in [ti.ui.SPACE]:
-                        self.is_paused[None] = 0
+                if self.window.is_pressed(ti.ui.SPACE):
+                    self.is_paused[None] = 0
                 if self.is_paused[None] == 0:
                     self.ants.slime_move()
                     if i % 1 == 0:
@@ -509,4 +507,5 @@ class Detectables:
     def blur(self):
         for i, j in self.density_map:
             self.density_map[i, j] = (self.density_map[i-1, j] + self.density_map[i+1, j] + self.density_map[i, j+1] + self.density_map[i, j-1]+ self.density_map[i, j])/ 5
+
 
