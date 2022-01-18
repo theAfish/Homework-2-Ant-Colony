@@ -181,8 +181,8 @@ class AntColony:
 
 @ti.data_oriented
 class Renderer:
-    def __init__(self, size, resolution):
-        self.name = "Ant Colony"
+    def __init__(self, size, resolution, name="Ant Colony"):
+        self.name = name
         self.size = size
         self.res = resolution
         self.bg_color = [0, 0, 0]
