@@ -1,4 +1,4 @@
-from taichi_glsl import *
+from handy_shader_functions import *
 
 @ti.data_oriented
 class AntColony:
