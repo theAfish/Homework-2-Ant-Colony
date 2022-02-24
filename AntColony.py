@@ -1,8 +1,13 @@
-from taichi_glsl import *
+from handy_shader_functions import *
+
 
 @ti.data_oriented
 class AntColony:
-    def __init__(self, renderer=None, ants=None, p_from_home=None, p_from_food=None):
+    def __init__(self,
+                 renderer=None,
+                 ants=None,
+                 p_from_home=None,
+                 p_from_food=None):
         self.renderer = renderer
         self.size = renderer.size
         self.ants = ants
@@ -18,7 +23,9 @@ class AntColony:
         self.is_paused = ti.field(dtype=ti.i32, shape=[])
         self.window = renderer.window
         self.canvas = self.window.get_canvas()
-        self.image = ti.Vector.field(3, dtype=ti.f32, shape=(self.size, self.size))
+        self.image = ti.Vector.field(3,
+                                     dtype=ti.f32,
+                                     shape=(self.size, self.size))
 
     def set_ants(self, ants):
         self.ants = ants
@@ -32,7 +39,9 @@ class AntColony:
     @ti.kernel
     def set_pheromone(self):
         for i, j in self.image:
-            self.image[i, j] += self.p_from_home.density_map[i, j] * self.ph_color + self.p_from_food.density_map[i, j] * self.pf_color
+            self.image[i, j] += self.p_from_home.density_map[
+                i, j] * self.ph_color + self.p_from_food.density_map[
+                    i, j] * self.pf_color
 
     @ti.kernel
     def set_food(self):
@@ -54,18 +63,18 @@ class AntColony:
             for j in range(self.obstacle.size):
                 self.obstacle.density_map[i, j] = 1
                 self.obstacle.density_map[j, i] = 1
-            unit = int(self.obstacle.size/5)
-            for j in range(unit, 5*unit):
-                self.obstacle.density_map[i+4*unit, j] = 1
-            for j in range(unit, 4*unit):
+            unit = int(self.obstacle.size / 5)
+            for j in range(unit, 5 * unit):
+                self.obstacle.density_map[i + 4 * unit, j] = 1
+            for j in range(unit, 4 * unit):
                 self.obstacle.density_map[i + unit, j] = 1
-                self.obstacle.density_map[j, i+4*unit] = 1
-            for j in range(unit, 2*unit):
-                self.obstacle.density_map[j, i+unit] = 1
-                self.obstacle.density_map[j+ 2*unit, i + unit] = 1
-                self.obstacle.density_map[j + unit, i + 2*unit] = 1
-                self.obstacle.density_map[j + unit, i + 3*unit] = 1
-                self.obstacle.density_map[i + 3*unit, j+2*unit] = 1
+                self.obstacle.density_map[j, i + 4 * unit] = 1
+            for j in range(unit, 2 * unit):
+                self.obstacle.density_map[j, i + unit] = 1
+                self.obstacle.density_map[j + 2 * unit, i + unit] = 1
+                self.obstacle.density_map[j + unit, i + 2 * unit] = 1
+                self.obstacle.density_map[j + unit, i + 3 * unit] = 1
+                self.obstacle.density_map[i + 3 * unit, j + 2 * unit] = 1
                 self.obstacle.density_map[i + 3 * unit, j + unit] = 1
 
     def draw_image(self):
@@ -77,10 +86,11 @@ class AntColony:
 
     def draw_slime(self):
         self.set_pheromone()
-        self.canvas.set_image(self.image/10.0)
+        self.canvas.set_image(self.image / 10.0)
 
     def draw_ants(self):
-        self.canvas.circles(self.ants.get_ants(), self.ants_radius, (0.9, 0.9, 0.9))
+        self.canvas.circles(self.ants.get_ants(), self.ants_radius,
+                            (0.9, 0.9, 0.9))
 
     def draw_home(self):
         self.canvas.circles(self.home_pos, self.home_radius, (0.5, 0.5, 1.0))
@@ -104,9 +114,11 @@ class AntColony:
                 mouse = self.window.get_cursor_pos()
                 if self.window.is_pressed(ti.ui.SPACE):
                     self.is_paused[None] = 0
-                if self.window.is_pressed("h") and self.window.is_pressed(ti.ui.LMB):
+                if self.window.is_pressed("h") and self.window.is_pressed(
+                        ti.ui.LMB):
                     self.home_pos[0] = ti.Vector([mouse[0], mouse[1]])
-                    self.ants.set_random_circle(ti.Vector([mouse[0], mouse[1]]), self.home_radius)
+                    self.ants.set_random_circle(
+                        ti.Vector([mouse[0], mouse[1]]), self.home_radius)
                 if self.window.is_pressed("f"):
                     if self.window.is_pressed(ti.ui.LMB):
                         self.foods.draw(ti.Vector([mouse[0], mouse[1]]), 2)
@@ -120,7 +132,8 @@ class AntColony:
 
                 if self.is_paused[None] == 0:
 
-                    self.ants.move(self.home_pos, self.home_radius, self.foods, self.size, self.obstacle)
+                    self.ants.move(self.home_pos, self.home_radius, self.foods,
+                                   self.size, self.obstacle)
                     if i % 30 == 0:
                         self.ants.release_pheromone(self.size)
                     self.p_from_home.decay()
@@ -138,11 +151,15 @@ class AntColony:
                 if self.window.GUI.button("Puzzle?"):
                     self.set_puzzle()
                 self.window.GUI.text("Food Brush Size:")
-                self.foods.brush_size[None] = self.window.GUI.slider_float(" ", self.foods.brush_size[None], 1, 40)
+                self.foods.brush_size[None] = self.window.GUI.slider_float(
+                    " ", self.foods.brush_size[None], 1, 40)
                 self.window.GUI.text("Obstacle Brush Size:")
-                self.obstacle.brush_size[None] = self.window.GUI.slider_float("", self.obstacle.brush_size[None], 1, 40)
-                self.renderer.show_ants = self.window.GUI.checkbox("Show ants?", self.renderer.show_ants)
-                self.renderer.show_pheromone = self.window.GUI.checkbox("Show pheromone?", self.renderer.show_pheromone)
+                self.obstacle.brush_size[None] = self.window.GUI.slider_float(
+                    "", self.obstacle.brush_size[None], 1, 40)
+                self.renderer.show_ants = self.window.GUI.checkbox(
+                    "Show ants?", self.renderer.show_ants)
+                self.renderer.show_pheromone = self.window.GUI.checkbox(
+                    "Show pheromone?", self.renderer.show_pheromone)
                 self.window.GUI.end()
                 self.window.show()
 
@@ -166,12 +183,22 @@ class AntColony:
                 self.draw_image()
                 # self.draw_ants()
                 self.window.GUI.begin("Slime!", 0.05, 0.05, 0.3, 0.3)
-                self.ants.detect_r[None] = self.window.GUI.slider_float("det_r", self.ants.detect_r[None], 1, 40)
-                self.ants.detect_a[None] = self.window.GUI.slider_float("det_a", self.ants.detect_a[None], 0.0, pi)
-                self.ants.sens[None] = self.window.GUI.slider_float("sens", self.ants.sens[None], -10.0, 10.0)
-                self.ants.omgm[None] = self.window.GUI.slider_float("omgm", self.ants.omgm[None], 0.0, 1.0)
-                self.p_from_food.decay_rate[None] = self.window.GUI.slider_float("dec_r_1", self.p_from_food.decay_rate[None], 0.0, 20.0*1e-3)
-                self.p_from_home.decay_rate[None] = self.window.GUI.slider_float("dec_r_2", self.p_from_home.decay_rate[None], 0.0, 20.0*1e-3)
+                self.ants.detect_r[None] = self.window.GUI.slider_float(
+                    "det_r", self.ants.detect_r[None], 1, 40)
+                self.ants.detect_a[None] = self.window.GUI.slider_float(
+                    "det_a", self.ants.detect_a[None], 0.0, pi)
+                self.ants.sens[None] = self.window.GUI.slider_float(
+                    "sens", self.ants.sens[None], -10.0, 10.0)
+                self.ants.omgm[None] = self.window.GUI.slider_float(
+                    "omgm", self.ants.omgm[None], 0.0, 1.0)
+                self.p_from_food.decay_rate[
+                    None] = self.window.GUI.slider_float(
+                        "dec_r_1", self.p_from_food.decay_rate[None], 0.0,
+                        20.0 * 1e-3)
+                self.p_from_home.decay_rate[
+                    None] = self.window.GUI.slider_float(
+                        "dec_r_2", self.p_from_home.decay_rate[None], 0.0,
+                        20.0 * 1e-3)
 
                 self.window.GUI.end()
                 self.window.show()
@@ -190,13 +217,22 @@ class Renderer:
         self.show_pheromone = True
         self.show_home = True
 
+
 @ti.data_oriented
 class Ants:
-    def __init__(self, N, speed, p_from_food, p_from_home, sensitivity, clock_delta, dt=1e-3, omgmax=pi*0.05):
+    def __init__(self,
+                 N,
+                 speed,
+                 p_from_food,
+                 p_from_home,
+                 sensitivity,
+                 clock_delta,
+                 dt=1e-3,
+                 omgmax=pi * 0.05):
         self.N = N
         self.speed = speed * dt
         self.detect_radius = 14
-        self.detect_angle = 1.0 * pi/3
+        self.detect_angle = 1.0 * pi / 3
         self.sensitivity = sensitivity
         self.from_food = p_from_food
         self.from_home = p_from_home
@@ -260,13 +296,14 @@ class Ants:
 
     @ti.kernel
     def set_half_home(self):
-        for i in range(self.N/2):
+        for i in range(self.N / 2):
             self.is_home[i] = 1
 
     @ti.kernel
     def random_ori(self):
         for i in self.theta:
-            self.theta[i] += (rand() - 0.5) * 2.0 * self.omgm[None] + self.attraction[i]
+            self.theta[i] += (rand() -
+                              0.5) * 2.0 * self.omgm[None] + self.attraction[i]
 
     @ti.func
     def detect_things(self, idx, things, is_obstacle=False):
@@ -277,14 +314,18 @@ class Ants:
             for j in range(-self.detect_r[None], self.detect_r[None]):
                 vec = ti.Vector([i, j], ti.i32)
                 c_vec = vec + center_index
-                d_angle = self.get_angle_diff(self.get_angle(vec), self.theta[idx])
-                if self.detect_a[None]/3 < d_angle <= self.detect_a[None]/2:
+                d_angle = self.get_angle_diff(self.get_angle(vec),
+                                              self.theta[idx])
+                if self.detect_a[None] / 3 < d_angle <= self.detect_a[None] / 2:
                     ds[0] += things.density_map[c_vec]
                     ns[0] += 1
-                elif self.detect_a[None]/3 < 2 * pi - d_angle <= self.detect_a[None]/2:
+                elif self.detect_a[
+                        None] / 3 < 2 * pi - d_angle <= self.detect_a[None] / 2:
                     ds[2] += things.density_map[c_vec]
                     ns[2] += 1
-                elif 0 < d_angle <= self.detect_a[None]/6 or 0 <= 2 * pi - d_angle < self.detect_a[None]/6:
+                elif 0 < d_angle <= self.detect_a[
+                        None] / 6 or 0 <= 2 * pi - d_angle < self.detect_a[
+                            None] / 6:
                     ds[1] += things.density_map[c_vec]
                     ns[1] += 1
         for s in ti.static(range(3)):
@@ -292,17 +333,19 @@ class Ants:
                 ds[s] /= ns[s]
         if ds[0] > max(ds[1], ds[2]):
             if is_obstacle:
-                self.attraction[idx] = -0.3 #* ds[0]
+                self.attraction[idx] = -0.3  #* ds[0]
             else:
-                self.attraction[idx] += min(self.sens[None] * (ds[0]-ds[2]), self.detect_a[None] / 2)
+                self.attraction[idx] += min(self.sens[None] * (ds[0] - ds[2]),
+                                            self.detect_a[None] / 2)
         elif ds[2] > max(ds[1], ds[0]):
             if is_obstacle:
-                self.attraction[idx] = 0.3 #* ds[2]
+                self.attraction[idx] = 0.3  #* ds[2]
             else:
-                self.attraction[idx] += -min(self.sens[None] * (ds[2]-ds[0]), self.detect_a[None] / 2)
+                self.attraction[idx] += -min(self.sens[None] * (ds[2] - ds[0]),
+                                             self.detect_a[None] / 2)
         else:
             if is_obstacle and ds[1] > 0:
-                self.theta[idx] -= pi/2 - rand() * pi
+                self.theta[idx] -= pi / 2 - rand() * pi
             else:
                 self.attraction[idx] += 0.0
 
@@ -323,7 +366,8 @@ class Ants:
         return angle
 
     @ti.kernel
-    def detect(self, home_pos: ti.template(), home_radius: ti.f32, food: ti.template(), obstacle: ti.template(), size:ti.f32):
+    def detect(self, home_pos: ti.template(), home_radius: ti.f32,
+               food: ti.template(), obstacle: ti.template(), size: ti.f32):
         for i in range(self.N):
             self.attraction[i] = 0.0
             if (home_pos[0] - self.pos[i]).norm() <= home_radius:
@@ -331,7 +375,9 @@ class Ants:
                 if self.is_home[i] == 1:
                     self.is_home[i] = 0
                     self.theta[i] += pi
-            elif (home_pos[0] - self.pos[i]).norm() <= home_radius + self.detect_r[None]/size and self.is_home[i] == 1:
+            elif (home_pos[0] - self.pos[i]).norm(
+            ) <= home_radius + self.detect_r[None] / size and self.is_home[
+                    i] == 1:
                 self.theta[i] = self.get_angle(home_pos[0] - self.pos[i])
             if self.is_home[i] == 1:
                 self.detect_things(i, self.from_home)
@@ -351,11 +397,17 @@ class Ants:
     def release_pheromone(self, size: ti.i32):
         for i in self.pos:
             int_pos = ti.cast(self.pos[i] * size, dtype=ti.i32)
-            if self.is_home[i] == 1 and self.from_food.density_map[int_pos] < self.from_food.max_value:
-                self.from_food.density_map[int_pos] = self.from_food.single_value * self.internal_clock[i]
+            if self.is_home[i] == 1 and self.from_food.density_map[
+                    int_pos] < self.from_food.max_value:
+                self.from_food.density_map[
+                    int_pos] = self.from_food.single_value * self.internal_clock[
+                        i]
                 # self.from_food.set_area(int_pos, 1, self.internal_clock[i])
-            elif self.is_home[i] == 0 and self.from_home.density_map[int_pos] < self.from_home.max_value:
-                self.from_home.density_map[int_pos] = self.from_home.single_value * self.internal_clock[i]
+            elif self.is_home[i] == 0 and self.from_home.density_map[
+                    int_pos] < self.from_home.max_value:
+                self.from_home.density_map[
+                    int_pos] = self.from_home.single_value * self.internal_clock[
+                        i]
                 # self.from_home.set_area(int_pos, 1, self.internal_clock[i])
             if self.internal_clock[i] > 0.0:
                 self.internal_clock[i] -= self.clock_delta
@@ -374,11 +426,15 @@ class Ants:
     @ti.kernel
     def update_pos(self, obstacle: ti.template()):
         for i in self.pos:
-            self.pos[i] += ti.Vector([ti.cos(self.theta[i]), ti.sin(self.theta[i])]) * self.speed
-            if obstacle.density_map[ti.cast(self.pos[i] * obstacle.size, ti.i32)] != 0:
+            self.pos[i] += ti.Vector(
+                [ti.cos(self.theta[i]),
+                 ti.sin(self.theta[i])]) * self.speed
+            if obstacle.density_map[ti.cast(self.pos[i] * obstacle.size,
+                                            ti.i32)] != 0:
                 self.move_back(i)
-            if obstacle.density_map[ti.cast(self.pos[i] * obstacle.size, ti.i32)] != 0:
-                self.pos[i] = [0,0]
+            if obstacle.density_map[ti.cast(self.pos[i] * obstacle.size,
+                                            ti.i32)] != 0:
+                self.pos[i] = [0, 0]
 
     @ti.kernel
     def pbc(self):
@@ -390,14 +446,16 @@ class Ants:
 
     @ti.func
     def move_back(self, idx):
-        int_pos = ti.cast(self.pos[idx]*self.from_food.size, ti.i32)
+        int_pos = ti.cast(self.pos[idx] * self.from_food.size, ti.i32)
         self.from_food.wash_area(int_pos, 2)
         self.from_home.wash_area(int_pos, 2)
-        self.pos[idx] -= ti.Vector([ti.cos(self.theta[idx]), ti.sin(self.theta[idx])]) * self.speed
-        int_new_pos = ti.cast(self.pos[idx]*self.from_food.size, ti.i32)
+        self.pos[idx] -= ti.Vector(
+            [ti.cos(self.theta[idx]),
+             ti.sin(self.theta[idx])]) * self.speed
+        int_new_pos = ti.cast(self.pos[idx] * self.from_food.size, ti.i32)
         self.from_food.wash_area(int_new_pos, 2)
         self.from_home.wash_area(int_new_pos, 2)
-        self.theta[idx] -= pi/2 - rand() * pi
+        self.theta[idx] -= pi / 2 - rand() * pi
 
     def move(self, home_pos, home_r, food, size, obstacle):
         self.detect(home_pos, home_r, food, obstacle, size)
@@ -417,7 +475,9 @@ class Ants:
     @ti.kernel
     def slime_update(self):
         for i in self.pos:
-            self.pos[i] += ti.Vector([ti.cos(self.theta[i]), ti.sin(self.theta[i])]) * self.speed
+            self.pos[i] += ti.Vector(
+                [ti.cos(self.theta[i]),
+                 ti.sin(self.theta[i])]) * self.speed
             for d in ti.static(range(2)):
                 if self.pos[i][d] < 0:  # Bottom and left
                     self.pos[i][d] = 0  # move particle inside
@@ -427,15 +487,18 @@ class Ants:
                     self.pos[i][d] = 1  # move particle inside
                     self.theta[i] *= -1  # stop it from moving further
 
-
     @ti.kernel
     def slime_release_p(self, size: ti.i32):
         for i in self.pos:
             int_pos = ti.cast(self.pos[i] * size, dtype=ti.i32)
-            if self.is_home[i] == 1 and self.from_food.density_map[int_pos] < self.from_food.max_value:
-                self.from_food.density_map[int_pos] = self.from_food.single_value
-            elif self.is_home[i] == 0 and self.from_home.density_map[int_pos] < self.from_home.max_value:
-                self.from_home.density_map[int_pos] = self.from_home.single_value
+            if self.is_home[i] == 1 and self.from_food.density_map[
+                    int_pos] < self.from_food.max_value:
+                self.from_food.density_map[
+                    int_pos] = self.from_food.single_value
+            elif self.is_home[i] == 0 and self.from_home.density_map[
+                    int_pos] < self.from_home.max_value:
+                self.from_home.density_map[
+                    int_pos] = self.from_home.single_value
 
     def slime_move(self):
         self.slime_detect()
@@ -449,13 +512,19 @@ class Ants:
 
 @ti.data_oriented
 class Detectables:
-    def __init__(self, canvas, decay_rate, single_value, max_value, brush_size=None):
+    def __init__(self,
+                 canvas,
+                 decay_rate,
+                 single_value,
+                 max_value,
+                 brush_size=None):
         self.init_decay_rate = decay_rate
         self.max_value = max_value
         self.single_value = single_value
         self.canvas = canvas
         self.size = self.canvas.size
-        self.density_map = ti.field(dtype=ti.f32, shape=(canvas.size, canvas.size))
+        self.density_map = ti.field(dtype=ti.f32,
+                                    shape=(canvas.size, canvas.size))
         self.init_brush_size = brush_size
         self.brush_size = ti.field(dtype=ti.f32, shape=())
         self.decay_rate = ti.field(dtype=ti.f32, shape=())
@@ -493,19 +562,21 @@ class Detectables:
 
     @ti.func
     def set_area(self, center, radius, rate):
-        for i in range(center[0]-radius, center[0]+radius):
-            for j in range(center[1]-radius, center[1]+radius):
+        for i in range(center[0] - radius, center[0] + radius):
+            for j in range(center[1] - radius, center[1] + radius):
                 self.density_map[i, j] += self.single_value * rate
 
     @ti.func
     def wash_area(self, center, radius):
-        for i in range(center[0]-radius, center[0]+radius):
-            for j in range(center[1]-radius, center[1]+radius):
+        for i in range(center[0] - radius, center[0] + radius):
+            for j in range(center[1] - radius, center[1] + radius):
                 self.density_map[i, j] = 0.0
 
     @ti.kernel
     def blur(self):
         for i, j in self.density_map:
-            self.density_map[i, j] = (self.density_map[i-1, j] + self.density_map[i+1, j] + self.density_map[i, j+1] + self.density_map[i, j-1]+ self.density_map[i, j])/ 5
-
-
+            self.density_map[
+                i,
+                j] = (self.density_map[i - 1, j] + self.density_map[i + 1, j] +
+                      self.density_map[i, j + 1] + self.density_map[i, j - 1] +
+                      self.density_map[i, j]) / 5
